@@ -1,0 +1,122 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+.mapboxgl-popup-content {
+    background-color: #222222;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    border: none;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.mapboxgl-popup-tip {
+    border-top-color: #222222 !important;
+}
+
+.mapboxgl-popup-close-button {
+    font-size: 18px;
+    color: #686868;
+    padding: 6px 10px;
+    outline: none;
+}
+
+.cidade-titulo {
+    color: #eeeeee;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    margin-top: 5px;
+}
+
+.botoes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.btn-topico {
+    background-color: #5e5e5e;
+    color: #e6e6e6;
+    border: 1px solid #5e5e5e;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.btn-topico:hover { 
+    color: white; 
+    box-shadow: 0 4px 8px rgba(59, 59, 59, 0.342);
+    transform: scale(0.98);
+}
+
+.btn-topico:active {
+    transform: scale(0.94);
+}
+
+#info-panel {
+    width: 350px;
+    height: 100vh;
+    background-color: #ffffff;
+    color: rgb(5, 5, 5);
+    padding: 30px 20px;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+    
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 1000;
+    
+    transform: translateX(100%); 
+    transition: transform 0.4s ease-in-out;
+}
+
+#info-panel.visible {
+    transform: translateX(0); 
+}
+
+#close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #141414;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+#city-title {
+    margin-bottom: 20px;
+    margin-top: 10px;
+    font-size: 28px;
+    border-bottom: 2px solid #030303;
+    padding-bottom: 10px;
+}
+
+#city-info {
+    line-height: 1.6;
+    font-size: 16px;
+    color: #080808;
+}
