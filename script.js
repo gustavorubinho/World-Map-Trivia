@@ -50,44 +50,103 @@ map.on('click', (e) => {
                 <h3 class="cidade-titulo">${nomeDoLocal}</h3>
                 <div class="botoes-container">
                     <button class="btn-topico" id="btn-historia">História</button>
-                    <button class="btn-topico">Curiosidades</button>
-                    <button class="btn-topico">Locais Importantes</button>
+                    <button class="btn-topico" id="btn-curiosidades">Curiosidades</button>
+                    <button class="btn-topico" id="btn-locais">Locais Importantes</button>
                 </div>
             `)
             .addTo(map);
+            
         document.getElementById('btn-historia').addEventListener('click', () => {
-            buscarNaWikipedia(nomeDoLocal);
+            buscarHistoria(nomeDoLocal);
+        });
+        document.getElementById('btn-curiosidades').addEventListener('click', () => {
+            buscarCuriosidades(nomeDoLocal);
+        });
+        document.getElementById('btn-locais').addEventListener('click', () => {
+            buscarLocais(e.lngLat.lat, e.lngLat.lng);
         });
     }
 });
 
-async function buscarNaWikipedia(nomeDoLocal) {
+async function buscarHistoria(nomeDoLocal) {
     const painel = document.getElementById('info-panel');
-    const tituloPainel = document.getElementById('city-title');
     const textoPainel = document.getElementById('city-info');
-    tituloPainel.innerText = nomeDoLocal;
-    textoPainel.innerText = "Buscando nos arquivos da Wikipedia... ⏳";
+    document.getElementById('city-title').innerText = nomeDoLocal;
+    textoPainel.innerText = "Buscando os arquivos historicos...";
     painel.classList.add('visible'); 
 
     try {
-        const nomeFormatado = nomeDoLocal.replaceAll(' ', '_');
+        const nomeForm = nomeDoLocal.replaceAll(' ', '_');
+        let resposta = await fetch(`https://pt.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=false&explaintext=true&titles=${nomeForm}&format=json&origin=*`);
+        let dados = await resposta.json();
+        let idPagina = Object.keys(dados.query.pages)[0]; 
         
-        let resposta = await fetch(`https://pt.wikipedia.org/api/rest_v1/page/summary/${nomeFormatado}`);
-        
-        if (!resposta.ok) {
-            resposta = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${nomeFormatado}`);
+        if (idPagina === "-1") {
+            resposta = await fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=false&explaintext=true&titles=${nomeForm}&format=json&origin=*`);
+            dados = await resposta.json();
+            idPagina = Object.keys(dados.query.pages)[0]; 
         }
 
+        if (idPagina !== "-1") {
+            const textoCompleto = dados.query.pages[idPagina].extract;
+            const textoResumido = textoCompleto.substring(0, 1800) + "...\n\n(Fonte: Wikipedia)";
+            textoPainel.innerHTML = `<div class="texto-historia">${textoResumido}</div>`;
+        } else {
+            textoPainel.innerText = "A Wikipedia nao encontrou a historia detalhada deste lugar.";
+        }
+    } catch (e) { textoPainel.innerText = "Falha na conexao."; }
+}
+
+async function buscarLocais(lat, lng) {
+    const painel = document.getElementById('info-panel');
+    const textoPainel = document.getElementById('city-info');
+    document.getElementById('city-title').innerText = "Pontos Turisticos";
+    textoPainel.innerText = "Escaneando locais num raio de 10km...";
+    painel.classList.add('visible'); 
+
+    try {
+        // Usa o "Generator" da Wikipedia: busca os locais pela coordenada E TAMBEM puxa o resumo de cada um!
+        const resposta = await fetch(`https://pt.wikipedia.org/w/api.php?action=query&generator=geosearch&ggscoord=${lat}|${lng}&ggsradius=10000&ggslimit=5&prop=extracts&exintro=true&explaintext=true&format=json&origin=*`);
         const dados = await resposta.json();
         
-        if (dados.extract) {
-            textoPainel.innerText = dados.extract;
+        if (dados.query && dados.query.pages) {
+            const locais = Object.values(dados.query.pages);
+            let htmlLista = "Encontramos estes lugares registrados na Wikipedia perto do seu clique:<br><br><ul class='lista-resultados'>";
+            
+            locais.forEach(l => { 
+                const resumoCortado = l.extract ? l.extract.substring(0, 150) + "..." : "Sem descricao disponivel.";
+                htmlLista += `<li class="item-resultado"><strong>${l.title}</strong><br><span class="resumo-resultado">${resumoCortado}</span></li>`; 
+            });
+            textoPainel.innerHTML = htmlLista + "</ul>";
         } else {
-            textoPainel.innerText = "Poxa, a Wikipedia não tem um artigo sobre este lugar, nem em inglês!";
+            textoPainel.innerText = "Nao encontramos monumentos famosos registrados perto deste clique.";
         }
-    } catch (erro) {
-        textoPainel.innerText = "Falha na conexão de internet.";
-    }
+    } catch (e) { textoPainel.innerText = "Falha no radar da Wikipedia."; }
+}
+
+async function buscarCuriosidades(nomeDoLocal) {
+    const painel = document.getElementById('info-panel');
+    const textoPainel = document.getElementById('city-info');
+    document.getElementById('city-title').innerText = "Curiosidades";
+    textoPainel.innerText = "Buscando paginas relacionadas...";
+    painel.classList.add('visible'); 
+
+    try {
+        const resposta = await fetch(`https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch=${nomeDoLocal}&utf8=&format=json&origin=*`);
+        const dados = await resposta.json();
+        
+        if (dados.query && dados.query.search.length > 1) {
+            // Pula o primeiro resultado (que é a própria cidade) e pega os próximos 4
+            const coisasRelacionadas = dados.query.search.slice(1, 5);
+            let htmlLista = "A Wikipedia relaciona fortemente este lugar aos seguintes assuntos:<br><br><ul class='lista-resultados'>";
+            coisasRelacionadas.forEach(item => {
+                htmlLista += `<li class="item-resultado"><strong>${item.title}</strong><br><span class="resumo-resultado">${item.snippet}...</span></li>`;
+            });
+            textoPainel.innerHTML = htmlLista + "</ul>";
+        } else {
+            textoPainel.innerText = "Nao encontramos assuntos curiosos relacionados a este local.";
+        }
+    } catch (e) { textoPainel.innerText = "Falha na busca de curiosidades."; }
 }
 
 document.getElementById('close-btn').addEventListener('click', () => {
