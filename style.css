@@ -4,7 +4,7 @@
     box-sizing: border-box;
 }
 body {
-    width: 100vw;
+    width: 100%;
     height: 100vh;
     overflow: hidden;
 }
@@ -86,7 +86,7 @@ body {
     top: 0;
     z-index: 1000;
     
-    /* Configuração para o scroll funcionar: */
+    
     display: flex;
     flex-direction: column;
     
@@ -121,20 +121,20 @@ body {
     font-size: 28px;
     border-bottom: 2px solid #030303;
     padding-bottom: 10px;
-    flex-shrink: 0; /* Impede o título de espremer */
+    flex-shrink: 0; 
 }
 
-/* É aqui que a rolagem (scroll) vai acontecer! */
+
 #city-info {
     line-height: 1.6;
     font-size: 16px;
     color: #080808;
-    overflow-y: auto; /* Adiciona a barra de rolagem */
-    flex-grow: 1; /* Ocupa o resto do espaço vazio da tela */
-    padding-right: 10px; /* Dá um respiro para a barra não colar no texto */
+    overflow-y: auto; 
+    flex-grow: 1; 
+    padding-right: 10px; 
 }
 
-/* --- CLASSES PARA OS TEXTOS (Substituindo o estilo do JS) --- */
+
 .texto-historia {
     white-space: pre-wrap;
     font-size: 14.5px;

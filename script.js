@@ -77,22 +77,33 @@ async function buscarHistoria(nomeDoLocal) {
 
     try {
         const nomeForm = nomeDoLocal.replaceAll(' ', '_');
-        let resposta = await fetch(`https://pt.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=false&explaintext=true&titles=${nomeForm}&format=json&origin=*`);
+        let resposta = await fetch(`https://pt.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=false&explaintext=true&redirects=1&titles=${nomeForm}&format=json&origin=*`);
         let dados = await resposta.json();
         let idPagina = Object.keys(dados.query.pages)[0]; 
         
-        if (idPagina === "-1") {
-            resposta = await fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=false&explaintext=true&titles=${nomeForm}&format=json&origin=*`);
+        let textoExtraido = "";
+        if (idPagina !== "-1" && dados.query.pages[idPagina].extract) {
+            textoExtraido = dados.query.pages[idPagina].extract.trim();
+        }
+        
+        if (textoExtraido.length < 15) {
+            resposta = await fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=false&explaintext=true&redirects=1&titles=${nomeForm}&format=json&origin=*`);
             dados = await resposta.json();
             idPagina = Object.keys(dados.query.pages)[0]; 
+            if (idPagina !== "-1" && dados.query.pages[idPagina].extract) {
+                textoExtraido = dados.query.pages[idPagina].extract.trim();
+            }
         }
 
-        if (idPagina !== "-1") {
-            const textoCompleto = dados.query.pages[idPagina].extract;
-            const textoResumido = textoCompleto.substring(0, 1800) + "...\n\n(Fonte: Wikipedia)";
+        if (textoExtraido.length >= 15) {
+            let textoResumido = textoExtraido;
+            if (textoResumido.length > 1800) {
+                textoResumido = textoResumido.substring(0, 1800) + "...";
+            }
+            textoResumido += "\n\n(Fonte: Wikipedia)";
             textoPainel.innerHTML = `<div class="texto-historia">${textoResumido}</div>`;
         } else {
-            textoPainel.innerText = "A Wikipedia nao encontrou a historia detalhada deste lugar.";
+            textoPainel.innerText = "A Wikipedia nao encontrou uma historia detalhada deste lugar especifico.";
         }
     } catch (e) { textoPainel.innerText = "Falha na conexao."; }
 }
@@ -105,7 +116,6 @@ async function buscarLocais(lat, lng) {
     painel.classList.add('visible'); 
 
     try {
-        // Usa o "Generator" da Wikipedia: busca os locais pela coordenada E TAMBEM puxa o resumo de cada um!
         const resposta = await fetch(`https://pt.wikipedia.org/w/api.php?action=query&generator=geosearch&ggscoord=${lat}|${lng}&ggsradius=10000&ggslimit=5&prop=extracts&exintro=true&explaintext=true&format=json&origin=*`);
         const dados = await resposta.json();
         
@@ -136,7 +146,6 @@ async function buscarCuriosidades(nomeDoLocal) {
         const dados = await resposta.json();
         
         if (dados.query && dados.query.search.length > 1) {
-            // Pula o primeiro resultado (que é a própria cidade) e pega os próximos 4
             const coisasRelacionadas = dados.query.search.slice(1, 5);
             let htmlLista = "A Wikipedia relaciona fortemente este lugar aos seguintes assuntos:<br><br><ul class='lista-resultados'>";
             coisasRelacionadas.forEach(item => {
